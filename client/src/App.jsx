@@ -2,7 +2,7 @@ import { useState } from 'react'
 import './App.css'
 
 function App() {
-  const [serverUrl, setServerUrl] = useState('http://localhost:1234')
+  const [serverUrl, setServerUrl] = useState('http://we.makegumi.jp')
   const [message, setMessage] = useState('Hello from React!')
   const [response, setResponse] = useState('')
   const [loading, setLoading] = useState(false)
@@ -38,9 +38,9 @@ function App() {
       const res = await fetch(serverUrl, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
+          'Content-Type': 'text/plain',
         },
-        body: `message=${encodeURIComponent(message)}`
+        body: message
       })
 
       if (!res.ok) {
@@ -48,10 +48,7 @@ function App() {
       }
 
       const responseText = await res.text()
-      
-      // レスポンスをURLデコードして表示
-      const decodedResponse = decodeServerResponse(responseText)
-      setResponse(decodedResponse)
+      setResponse(responseText)
     } catch (err) {
       setError(`エラー: ${err.message}`)
     } finally {
@@ -71,7 +68,7 @@ function App() {
           type="text"
           value={serverUrl}
           onChange={(e) => setServerUrl(e.target.value)}
-          placeholder="http://localhost:1234"
+          placeholder="http://we.makegumi.jp"
         />
       </div>
 

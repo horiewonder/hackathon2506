@@ -194,14 +194,24 @@ fn create_error_response(error: ServerError) -> HttpResponse {
     }
 }
 
-// クライアント接続処理
+// クライアント接続処理（修正版3）
 fn handle_client(mut stream: TcpStream, config: &ServerConfig) -> Result<(), ServerError> {
     let mut buff = vec![0u8; config.buffer_size];
     let mut data = Vec::new();
+    let mut expected_total_length: Option<usize> = None;
 
-    // リクエストサイズ制限付きでデータを読み取り
+    // HTTPリクエスト全体（ヘッダー + ボディ）を読み取り
     loop {
         let n = stream.read(&mut buff)?;
+        if n == 0 {
+            // 接続が閉じられた
+            if expected_total_length.is_some() && data.len() < expected_total_length.unwrap() {
+                // まだデータが不足している
+                continue;
+            }
+            break;
+        }
+        
         data.extend_from_slice(&buff[0..n]);
         
         // リクエストサイズ制限をチェック
@@ -212,7 +222,42 @@ fn handle_client(mut stream: TcpStream, config: &ServerConfig) -> Result<(), Ser
             return Err(ServerError::RequestTooLarge);
         }
         
-        if n < config.buffer_size {
+        // HTTPヘッダーの終端を検出（一回だけ実行）
+        if expected_total_length.is_none() {
+            if let Some(header_end) = data.windows(4).position(|window| window == b"\r\n\r\n") {
+                let headers_str = String::from_utf8_lossy(&data[..header_end]);
+                
+                // Content-Lengthを探す
+                let mut content_length = 0;
+                for line in headers_str.lines() {
+                    if line.to_lowercase().starts_with("content-length:") {
+                        if let Some(length_str) = line.split(':').nth(1) {
+                            content_length = length_str.trim().parse().unwrap_or(0);
+                        }
+                        break;
+                    }
+                }
+                
+                expected_total_length = Some(header_end + 4 + content_length);
+                log_info!("Expected total HTTP request length: {} bytes (headers: {}, body: {})", 
+                         expected_total_length.unwrap(), header_end + 4, content_length);
+            }
+        }
+        
+        // 必要なデータが揃ったかチェック
+        if let Some(total_length) = expected_total_length {
+            if data.len() >= total_length {
+                log_info!("Complete HTTP request received: {} bytes", data.len());
+                data.truncate(total_length);
+                break;
+            } else {
+                log_info!("Partial HTTP request: {}/{} bytes", data.len(), total_length);
+            }
+        }
+        
+        // 無限ループ防止のため、バッファサイズが小さい場合も抜ける
+        // ただし、expected_total_lengthが設定されている場合は続行
+        if n < config.buffer_size && expected_total_length.is_none() {
             break;
         }
     }
@@ -230,6 +275,7 @@ fn handle_client(mut stream: TcpStream, config: &ServerConfig) -> Result<(), Ser
             }
         },
         Err(e) => {
+            log_error!("Decoder error with {} bytes: {:?}", data.len(), e);
             create_error_response(ServerError::DecodingError(format!("{:?}", e)))
         }
     };

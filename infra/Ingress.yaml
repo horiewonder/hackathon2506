@@ -1,0 +1,17 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: wasm-http-ingress
+spec:
+  ingressClassName: traefik # 新しい形式
+  rules:
+    - host: we.makegumi.jp
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: wasm-http-service
+                port:
+                  number: 80
