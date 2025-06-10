@@ -2,7 +2,7 @@ import { useState } from 'react'
 import './App.css'
 
 function App() {
-  const [serverUrl, setServerUrl] = useState('http://we.makegumi.jp')
+  const [serverUrl, setServerUrl] = useState('https://we.makegumi.jp')
   const [message, setMessage] = useState('Hello from React!')
   const [response, setResponse] = useState('')
   const [loading, setLoading] = useState(false)
@@ -68,7 +68,7 @@ function App() {
           type="text"
           value={serverUrl}
           onChange={(e) => setServerUrl(e.target.value)}
-          placeholder="http://we.makegumi.jp"
+          placeholder="https://we.makegumi.jp"
         />
       </div>
 
