@@ -1,6 +1,8 @@
-# WasmEdge + K3s セットアップガイド 🚀
+# WasmEdge + Kubernetes セットアップガイド 🚀
 
-このガイドでは、K3s上でWasmEdgeランタイムを使ってWebAssemblyコンテナを実行する環境を構築する手順を説明します。
+このガイドでは、Kubernetes上でWasmEdgeランタイムを使ってWebAssemblyコンテナを実行する環境を構築する手順を説明します。
+
+軽量なKubernetesとしてk3sを利用しました。
 
 ## 📋 前提条件
 
@@ -62,6 +64,8 @@ ls -la /usr/local/bin/containerd-shim-wasmedge-v1
 
 ## ⚙️ ステップ4: containerd設定
 
+コンテナランタイムとしてwasmwdgeを設定する。
+
 ```bash
 # K3s用のcontainerd設定テンプレートを作成
 sudo tee /var/lib/rancher/k3s/agent/etc/containerd/config.toml.tmpl > /dev/null <<'EOF'
@@ -76,6 +80,8 @@ sudo systemctl restart k3s
 ```
 
 ## 🎯 ステップ5: RuntimeClassの作成
+
+kubernetesのRuntimeClassの定義
 
 ```bash
 kubectl apply -f - <<EOF
@@ -93,6 +99,8 @@ kubectl get runtimeclass
 ## 🧪 ステップ6: Wasmアプリケーションのテスト
 
 ### サンプルアプリのデプロイ
+
+一般公開されているwasmのサンプルアプリケーションでwasmedgeランタイムの動作確認を行う。
 
 ```bash
 kubectl apply -f - <<EOF
@@ -123,6 +131,8 @@ kubectl describe pod wasm-demo
 ```
 
 ## 🌐 ステップ7: HTTPサーバーアプリのテスト
+
+同様に、常駐アプリケーションの動作確認を行う。
 
 ```bash
 kubectl apply -f - <<EOF

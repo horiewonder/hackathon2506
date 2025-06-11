@@ -1,6 +1,6 @@
-# WASM HTTP Server Client
+# Simple HTTP Client
 
-WebAssembly（WASM）で動作するHTTPサーバーをテストするためのReact SPAクライアントです。
+HTTPサーバーをテストするためのReact SPAクライアントです。指定したエンドポイントにPOSTします。
 
 ## 必要な環境
 
